@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from torchvision.models import resnet50
 
+
 class EmbeddingNet(nn.Module):
     def __init__(self, embedding_dim=128):
         super(EmbeddingNet, self).__init__()
@@ -27,6 +28,13 @@ class SiameseNetwork(nn.Module):
     def euclidean_distance(self, emb1, emb2):
         dis = ((emb1 - emb2) ** 2.).sum(dim=1, keepdim=True).sqrt()
         return dis
+
+    def inference(self, x1, x2):
+        emb1 = self.embedder(x1)
+        emb2 = self.embedder(x2)
+
+        d = self.euclidean_distance(emb1, emb2)
+        return torch.exp(-d)
 
     def forward(self, a, p, n):
         a_emb = self.embedder(a)

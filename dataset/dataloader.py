@@ -1,10 +1,14 @@
 import os
+
+import torch
 from PIL import Image
 
 import random
 import pandas as pd
 
 from torch.utils.data import DataLoader, Dataset
+
+from sklearn.model_selection import train_test_split
 
 class TripletDataset(Dataset):
     def __init__(self, df, image_folder, is_train=True, transform=None):
@@ -29,6 +33,10 @@ class TripletDataset(Dataset):
         if self.is_train:
 
             positive_list = self.index[self.index!=idx][self.labels[self.index!=idx]==anchor_label]
+
+            if not positive_list:
+                positive_list = self.index[self.index == idx][self.labels[self.index == idx] == anchor_label]
+
             positive_idx = random.choice(positive_list)
             positive_image_path = os.path.join(self.image_folder, self.image_names.iloc[positive_idx])
             positive_image = Image.open(positive_image_path).convert('RGB')
@@ -52,22 +60,33 @@ class TripletDataset(Dataset):
             other_image_path = os.path.join(self.image_folder, self.image_names.iloc[other_idx])
             other_image = Image.open(other_image_path).convert('RGB')
 
+            other_label = self.labels.iloc[other_idx]
+
+            if anchor_label == other_label:
+                y = torch.ones(1)
+            else:
+                y = torch.zeros(1)
+
+
             if self.transform is not None:
                 anchor_image = self.transform(anchor_image)
                 other_image = self.transform(other_image)
-            return anchor_image, other_image, anchor_label
-
-
-
+            return anchor_image, other_image, y
 
 
 def get_data(params):
 
     df = pd.read_csv(params['df_path'])
+
+    train, test = train_test_split(df, test_size=params['test_size'], random_state=params['seed'])
+
     # Dividere in train, val and test?
 
-    dataset = TripletDataset(df, params['image_folder'])
-    dataloader = DataLoader(dataset, batch_size=params['batch_size'], shuffle=True)
-    return dataloader
+    train_dataset = TripletDataset(train, params['image_folder'])
+    train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
+
+    test_dataset = TripletDataset(test, params['image_folder'])
+    test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
+    return train_loader, test_loader
 
 

@@ -5,7 +5,7 @@ import os
 
 import torch
 
-from models.models import EmbeddingNet
+from models.models import SiameseNetwork
 from models.trainer import Trainer
 from utils.utility import create_folders, set_reproducibility
 from dataset.dataloader import get_data
@@ -46,9 +46,10 @@ def main(fname):
         params['path_training_loss_log'] = os.path.join(params["SAVE_FOLDER"], 'plots', path_training_loss_log)
 
         # Create data
-        train_loader = get_data(params)
+        train_loader, test_loader = get_data(params)
 
-        model = EmbeddingNet(embedding_dim=params['embedding_dim'])
+        # model = EmbeddingNet(embedding_dim=params['embedding_dim'])
+        model = SiameseNetwork(embedding_dim=params['embedding_dim'])
         trainer = Trainer(params, model)
 
         if params['train']:

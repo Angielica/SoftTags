@@ -1,6 +1,6 @@
 import numpy as np
 
-from losses import TripletLoss
+from losses import TripletLoss, TripletClassifierLoss
 
 from time import time
 import torch
@@ -13,17 +13,17 @@ class Trainer:
 
         self.model = model
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=params['lr'])
-        self.criterion = TripletLoss(margin=params['margin'], p=params['p'], eps=params['eps'],
-                                     reduction=params['reduction'])
+        # self.criterion = TripletLoss(margin=params['margin'], p=params['p'], eps=params['eps'],
+        #                              reduction=params['reduction'])
+
+        self.criterion = TripletClassifierLoss()
 
 
     def train_step(self, a, p, n):
         self.optimizer.zero_grad()
-        a_emb = self.model(a)
-        p_emb = self.model(p)
-        n_emb = self.model(n)
 
-        loss = self.criterion(a_emb, p_emb, n_emb)
+        d_aa, d_ap, d_an, d_pn = self.model(a, p, n)
+        loss = self.criterion(d_aa, d_ap, d_an, d_pn)
         loss.backward()
         self.optimizer.step()
 
@@ -38,11 +38,9 @@ class Trainer:
             for a, p, n, _ in val_loader:
                 a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
-                a_emb = self.model(a)
-                p_emb = self.model(p)
-                n_emb = self.model(n)
+                d_aa, d_ap, d_an, d_pn = self.model(a, p, n)
 
-                loss = self.criterion(a_emb, p_emb, n_emb)
+                loss = self.criterion(d_aa, d_ap, d_an, d_pn)
                 val_losses.append(loss.item())
 
         return np.mean(val_losses)
@@ -51,19 +49,23 @@ class Trainer:
     def test(self, test_loader, model):
         model.eval()
 
-        val_losses = []
-
         with torch.no_grad():
-            for x1, x2, _ in test_loader:
+            count = 0
+            for x1, x2, y in test_loader:
                 x1, x2 = x1.to(self.device), x2.to(self.device)
 
-                x1_emb = self.model(x1)
-                x2_emb = self.model(x2)
+                d = model.inference(x1, x2)
 
-                # TODO
+                if count == 0:
+                    y_true = y
+                    y_pred = d.item().detach().cpu()
 
+                else:
+                    y_true = torch.cat((y_true, y), dim=0)
+                    y_pred = torch.cat((y_pred, d.item().detach().cpu()), dim=0)
 
-        return None
+                count += 1
+        return y_true, y_pred
 
 
     def train(self, train_loader, val_loader=None):
