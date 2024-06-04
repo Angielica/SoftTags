@@ -1,6 +1,6 @@
 {
   "dataset_name": "SoftTags",
-  "df_path": "./data/tags.csv",
+  "df_path": "./data/triplet.csv",
   "image_folder": "./data/tags",
   "n_gpu": "0",
   "init_seed": 42,
@@ -8,6 +8,7 @@
   "embedding_dim":128,
   "lr": 1e-4,
   "batch_size": 16,
+  "img_size": 224,
   "n_epochs": 100,
   "margin": 1.0,
   "p": 2,
@@ -15,6 +16,8 @@
   "reduction": "mean",
   "SAVE_FOLDER": "./saved",
   "load_best_model": 0,
-  "test_size": 0.2
+  "test_size": 0.2,
+  "train": 1,
+  "test": 1
 
 }

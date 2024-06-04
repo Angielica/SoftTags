@@ -1,9 +1,11 @@
 import numpy as np
 
-from losses import TripletLoss, TripletClassifierLoss
+from models.losses import TripletLoss, TripletClassifierLoss
 
 from time import time
 import torch
+
+from tqdm import tqdm
 
 from utils.plotter import plot_loss_training, plot_loss_training_log
 class Trainer:
@@ -18,12 +20,12 @@ class Trainer:
 
         self.criterion = TripletClassifierLoss()
 
-
     def train_step(self, a, p, n):
         self.optimizer.zero_grad()
 
-        d_aa, d_ap, d_an, d_pn = self.model(a, p, n)
-        loss = self.criterion(d_aa, d_ap, d_an, d_pn)
+        # d_aa, d_ap, d_an, d_pn = self.model(a, p, n)
+        d_ap, d_an, d_pn = self.model(a, p, n)
+        loss = self.criterion(d_ap, d_an, d_pn)
         loss.backward()
         self.optimizer.step()
 
@@ -38,13 +40,12 @@ class Trainer:
             for a, p, n, _ in val_loader:
                 a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
-                d_aa, d_ap, d_an, d_pn = self.model(a, p, n)
+                d_ap, d_an, d_pn = self.model(a, p, n)
 
-                loss = self.criterion(d_aa, d_ap, d_an, d_pn)
+                loss = self.criterion(d_ap, d_an, d_pn)
                 val_losses.append(loss.item())
 
         return np.mean(val_losses)
-
 
     def test(self, test_loader, model):
         model.eval()
@@ -67,7 +68,6 @@ class Trainer:
                 count += 1
         return y_true, y_pred
 
-
     def train(self, train_loader, val_loader=None):
         train_losses, val_losses = [], []
         best_loss = np.Inf
@@ -75,6 +75,8 @@ class Trainer:
         n_epochs = self.params['n_epochs']
 
         time_start = time()
+        print(f'Starting training phase. Starting time: {time_start} \n')
+        print(f"Number of steps: {len(train_loader)}")
 
         with open(self.params['log_path'], 'w') as f:
             f.write(f'Starting training phase. Starting time: {time_start} \n')
@@ -84,7 +86,7 @@ class Trainer:
                 self.model.train()
                 epoch_loss = []
 
-                for a, p, n, _ in train_loader:
+                for a, p, n, _ in tqdm(train_loader, total=len(train_loader)):
                     a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
                     loss = self.train_step(a, p, n)
@@ -93,9 +95,9 @@ class Trainer:
                 epoch_loss = np.mean(epoch_loss)
                 train_losses.append(epoch_loss)
 
-                print(f'Epoch: {epoch/n_epochs}, Train loss: {epoch_loss}')
+                print(f'Epoch: {epoch}/{n_epochs}, Train loss: {epoch_loss}')
                 with open(self.params['log_path'], 'w') as f:
-                    f.write(f'Epoch: {epoch / n_epochs}, Train loss: {epoch_loss}')
+                    f.write(f'Epoch: {epoch} / {n_epochs}, Train loss: {epoch_loss}')
 
                 if val_loader is not None:
                     val_loss = self.evaluate(val_loader)
@@ -104,10 +106,9 @@ class Trainer:
                         best_loss = val_loss
                         torch.save(self.model.state_dict(), self.params["best_path_model"])
 
-                    print(f'Epoch: {epoch / n_epochs}, Val loss: {val_loss}')
+                    print(f'Epoch: {epoch} / {n_epochs}, Val loss: {val_loss}')
                     with open(self.params['log_path'], 'w') as f:
-                        f.write(f'Epoch: {epoch / n_epochs}, Val loss: {val_loss}')
-
+                        f.write(f'Epoch: {epoch} / {n_epochs}, Val loss: {val_loss}')
 
         except KeyboardInterrupt:
             print('Early training phase ..')

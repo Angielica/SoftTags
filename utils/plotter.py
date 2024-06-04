@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+
+
 def plot_loss_training(loss_values, path):
     epochs = range(1, len(loss_values) + 1)
 
@@ -10,6 +12,7 @@ def plot_loss_training(loss_values, path):
     plt.legend(loc='upper center')
     plt.savefig(path)
     plt.show()
+
 
 def plot_loss_training_log(loss_values, path):
     epochs = range(1, len(loss_values) + 1)

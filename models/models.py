@@ -21,8 +21,9 @@ class EmbeddingNet(nn.Module):
 
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, embedding_dim=128):
+    def __init__(self, embedding_dim=128, eps=.99):
         super(SiameseNetwork, self).__init__()
+        self.eps = eps
         self.embedder = EmbeddingNet(embedding_dim=embedding_dim)
 
     def euclidean_distance(self, emb1, emb2):
@@ -41,12 +42,12 @@ class SiameseNetwork(nn.Module):
         p_emb = self.embedder(p)
         n_emb = self.embedder(n)
 
-        d_aa = self.euclidean_distance(a_emb, a_emb)
+        # d_aa = self.euclidean_distance(a_emb, a_emb)
         d_ap = self.euclidean_distance(a_emb, p_emb)
 
         d_an = self.euclidean_distance(a_emb, n_emb)
         d_pn = self.euclidean_distance(p_emb, n_emb)
 
-        return torch.exp(-d_aa), torch.exp(-d_ap), torch.exp(-d_an), torch.exp(-d_pn)
+        return torch.exp(-d_ap), torch.exp(-d_an), torch.exp(-d_pn)
 
 
