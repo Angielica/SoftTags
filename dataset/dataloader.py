@@ -111,25 +111,35 @@ class TripletDatasetAll(Dataset):
             return anchor_image, positive_image, negative_image, anchor_label
 
         else:
+            '''
             p = torch.rand(1)
 
             if p > self.thresh:
                 return anchor_image, positive_image, torch.ones(1)
             else:
                 return anchor_image, negative_image, torch.zeros(1)
+            '''
+            return anchor_image, positive_image, torch.ones(1), negative_image, torch.zeros(1)
 
 
 def get_data(params):
 
     df = pd.read_csv(params['df_path'])
 
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Resize((params['img_size'], params['img_size']))])
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Resize((params['img_size'], params['img_size']))])
+
+    print(df.shape)
+
 
     train, test = train_test_split(df, test_size=params['test_size'], random_state=params['seed'])
+
+    print(train.shape)
+    print(test.shape)
 
     train_dataset = TripletDatasetAll(train, params['image_folder'], transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
 
-    test_dataset = TripletDatasetAll(test, params['image_folder'], is_train=False)
+    test_dataset = TripletDatasetAll(test, params['image_folder'], is_train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
     return train_loader, test_loader

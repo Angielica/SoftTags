@@ -24,8 +24,8 @@ class Trainer:
         self.optimizer.zero_grad()
 
         # d_aa, d_ap, d_an, d_pn = self.model(a, p, n)
-        d_ap, d_an, d_pn = self.model(a, p, n)
-        loss = self.criterion(d_ap, d_an, d_pn)
+        d_ap, d_an = self.model(a, p, n)
+        loss = self.criterion(d_ap, d_an)
         loss.backward()
         self.optimizer.step()
 
@@ -40,9 +40,9 @@ class Trainer:
             for a, p, n, _ in val_loader:
                 a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
-                d_ap, d_an, d_pn = self.model(a, p, n)
+                d_ap, d_an = self.model(a, p, n)
 
-                loss = self.criterion(d_ap, d_an, d_pn)
+                loss = self.criterion(d_ap, d_an)
                 val_losses.append(loss.item())
 
         return np.mean(val_losses)
@@ -52,18 +52,27 @@ class Trainer:
 
         with torch.no_grad():
             count = 0
-            for x1, x2, y in test_loader:
-                x1, x2 = x1.to(self.device), x2.to(self.device)
+            # for x1, x2, y in tqdm(test_loader):
+            for a, p, yap, n, yan in tqdm(test_loader):
+                # x1, x2 = x1.to(self.device), x2.to(self.device)
+                a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
-                d = model.inference(x1, x2)
+                dap = model.inference(a, p)
+                dan = model.inference(a, n)
 
                 if count == 0:
-                    y_true = y
-                    y_pred = d.item().detach().cpu()
+                    y_true = yap
+                    y_pred = dap.detach().cpu()
+
+                    y_true = torch.cat((y_true, yan))
+                    y_pred = torch.cat((y_pred, dan.detach().cpu()))
 
                 else:
-                    y_true = torch.cat((y_true, y), dim=0)
-                    y_pred = torch.cat((y_pred, d.item().detach().cpu()), dim=0)
+                    y_true = torch.cat((y_true, yap), dim=0)
+                    y_pred = torch.cat((y_pred, dap.detach().cpu()), dim=0)
+
+                    y_true = torch.cat((y_true, yan), dim=0)
+                    y_pred = torch.cat((y_pred, dan.detach().cpu()), dim=0)
 
                 count += 1
         return y_true, y_pred
@@ -78,7 +87,7 @@ class Trainer:
         print(f'Starting training phase. Starting time: {time_start} \n')
         print(f"Number of steps: {len(train_loader)}")
 
-        with open(self.params['log_path'], 'w') as f:
+        with open(self.params['log_path'], 'a') as f:
             f.write(f'Starting training phase. Starting time: {time_start} \n')
 
         try:
@@ -96,7 +105,7 @@ class Trainer:
                 train_losses.append(epoch_loss)
 
                 print(f'Epoch: {epoch}/{n_epochs}, Train loss: {epoch_loss}')
-                with open(self.params['log_path'], 'w') as f:
+                with open(self.params['log_path'], 'a') as f:
                     f.write(f'Epoch: {epoch} / {n_epochs}, Train loss: {epoch_loss}')
 
                 if val_loader is not None:
@@ -107,8 +116,13 @@ class Trainer:
                         torch.save(self.model.state_dict(), self.params["best_path_model"])
 
                     print(f'Epoch: {epoch} / {n_epochs}, Val loss: {val_loss}')
-                    with open(self.params['log_path'], 'w') as f:
+                    with open(self.params['log_path'], 'a') as f:
                         f.write(f'Epoch: {epoch} / {n_epochs}, Val loss: {val_loss}')
+
+                else:
+                    if epoch_loss < best_loss:
+                        best_loss = epoch_loss
+                        torch.save(self.model.state_dict(), self.params["best_path_model"])
 
         except KeyboardInterrupt:
             print('Early training phase ..')

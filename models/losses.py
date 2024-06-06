@@ -17,13 +17,13 @@ class TripletClassifierLoss(nn.Module):
 
         self.bce = nn.BCEWithLogitsLoss()
 
-    def forward(self, d_ap, d_an, d_pn):
+    def forward(self, d_ap, d_an):
         y_near = torch.ones_like(d_ap)
         y_far = torch.zeros_like(d_an)
 
         # bce_aa = self.bce(d_aa, y_near)
         bce_ap = self.bce(d_ap, y_near)
         bce_an = self.bce(d_an, y_far)
-        bce_pn = self.bce(d_pn, y_far)
+        # bce_pn = self.bce(d_pn, y_far)
 
-        return torch.mean(bce_ap + bce_an + bce_pn)
+        return torch.mean(bce_ap + bce_an)

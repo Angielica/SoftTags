@@ -2,13 +2,14 @@
   "dataset_name": "SoftTags",
   "df_path": "./data/triplet.csv",
   "image_folder": "./data/tags",
-  "n_gpu": "0",
+  "n_gpu": "1",
   "init_seed": 42,
   "n_runs": 1,
   "embedding_dim":128,
   "lr": 1e-4,
   "batch_size": 16,
-  "img_size": 224,
+  "img_size": 32,
+  "n_channels": 3,
   "n_epochs": 100,
   "margin": 1.0,
   "p": 2,
@@ -17,7 +18,8 @@
   "SAVE_FOLDER": "./saved",
   "load_best_model": 0,
   "test_size": 0.2,
-  "train": 1,
-  "test": 1
+  "train": 0,
+  "test": 1,
+  "angle": "all"
 
 }
