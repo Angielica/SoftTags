@@ -7,7 +7,7 @@ import torch
 
 from tqdm import tqdm
 
-from utils.plotter import plot_loss_training, plot_loss_training_log
+from utils.plotter import plot_loss_training, plot_loss_training_log, plot_loss, plot_loss_log
 class Trainer:
     def __init__(self, params, model):
         self.params = params
@@ -110,6 +110,7 @@ class Trainer:
 
                 if val_loader is not None:
                     val_loss = self.evaluate(val_loader)
+                    val_losses.append(val_loss)
 
                     if val_loss < best_loss:
                         best_loss = val_loss
@@ -135,8 +136,13 @@ class Trainer:
 
         torch.save(self.model.state_dict(), self.params["last_path_model"])
 
-        plot_loss_training(train_losses, self.params["path_training_loss"])
-        plot_loss_training_log(train_losses, self.params["path_training_loss_log"])
+        if val_loader is None:
+            plot_loss_training(train_losses, self.params["path_training_loss"])
+            plot_loss_training_log(train_losses, self.params["path_training_loss_log"])
+        else:
+            plot_loss(train_losses, val_losses, self.params['path_training_loss'])
+            plot_loss_log(train_losses, val_losses, self.params['path_training_loss_log'])
+
 
 
 

@@ -47,6 +47,30 @@ def plot_pr_curve(precision, recall, path):
     plt.show()
 
 
-def pr_auc(y_test, y_pred):
+def plot_loss(loss_values, val_loss_values, path):
+    epochs = range(1, len(loss_values) + 1)
 
-    return auc_score
+    plt.figure(figsize=(10, 5))
+    plt.plot(epochs, loss_values, 'b', label='Training loss')
+    plt.plot(epochs, val_loss_values, 'y', label='Validation loss')
+    plt.title('Training loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(loc='upper center')
+    plt.savefig(path)
+    plt.show()
+
+
+def plot_loss_log(loss_values, val_loss_values, path):
+    epochs = range(1, len(loss_values) + 1)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(epochs, loss_values, 'b', label='Training loss')
+    plt.plot(epochs, val_loss_values, 'y', label='Validation loss')
+    plt.yscale('log')
+    plt.title('Training loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(loc='upper center')
+    plt.savefig(path)
+    plt.show()
