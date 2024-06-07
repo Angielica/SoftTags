@@ -98,6 +98,5 @@ def main(fname):
             plot_pr_curve(precision, recall, params['path_pr_curve'])
 
 
-
 if __name__ == "__main__":
     main(sys.argv[1])

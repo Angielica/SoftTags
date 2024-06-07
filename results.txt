@@ -1,0 +1,26 @@
+# Only 0
+
+              precision    recall  f1-score   support
+
+         0.0       1.00      0.97      0.98       129
+         1.0       0.97      1.00      0.98       129
+
+    accuracy                           0.98       258
+   macro avg       0.98      0.98      0.98       258
+weighted avg       0.98      0.98      0.98       258
+
+AUC: 0.99
+PR AUC: 0.98
+
+# Only 0 split on class label
+              precision    recall  f1-score   support
+
+         0.0       1.00      0.94      0.97       108
+         1.0       0.95      1.00      0.97       108
+
+    accuracy                           0.97       216
+   macro avg       0.97      0.97      0.97       216
+weighted avg       0.97      0.97      0.97       216
+
+AUC: 0.99
+PR AUC: 0.98

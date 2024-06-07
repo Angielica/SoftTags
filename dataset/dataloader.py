@@ -124,15 +124,17 @@ class TripletDatasetAll(Dataset):
 
 def get_data(params):
 
-    df = pd.read_csv(params['df_path'])
+    # df = pd.read_csv(params['df_path'])
 
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((params['img_size'], params['img_size']))])
 
-    print(df.shape)
+    # print(df.shape)
 
 
-    train, test = train_test_split(df, test_size=params['test_size'], random_state=params['seed'])
+    # train, test = train_test_split(df, test_size=params['test_size'], random_state=params['seed'])
+    train = pd.read_csv(params['df_path_train'])
+    test = pd.read_csv(params['df_path_test'])
 
     print(train.shape)
     print(test.shape)
