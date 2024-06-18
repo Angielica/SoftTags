@@ -1,13 +1,12 @@
 import numpy as np
-
-from models.losses import TripletLoss, TripletClassifierLoss
-
 from time import time
 import torch
-
 from tqdm import tqdm
 
+from models.losses import TripletLoss, TripletClassifierLoss
 from utils.plotter import plot_loss_training, plot_loss_training_log, plot_loss, plot_loss_log
+
+
 class Trainer:
     def __init__(self, params, model):
         self.params = params
@@ -142,8 +141,3 @@ class Trainer:
         else:
             plot_loss(train_losses, val_losses, self.params['path_training_loss'])
             plot_loss_log(train_losses, val_losses, self.params['path_training_loss_log'])
-
-
-
-
-

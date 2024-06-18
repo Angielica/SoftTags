@@ -1,15 +1,11 @@
-import os
-
-import torch
 from PIL import Image
-
-import random
+import os
 import pandas as pd
-
+import random
+from sklearn.model_selection import train_test_split
+import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-
-from sklearn.model_selection import train_test_split
 
 
 class TripletDataset(Dataset):
@@ -27,13 +23,11 @@ class TripletDataset(Dataset):
         return len(self.index)
 
     def __getitem__(self, idx):
-
         anchor_label = self.labels[self.index[idx]]
         anchor_image_path = os.path.join(self.image_folder, self.image_names[self.index[idx]])
         anchor_image = Image.open(anchor_image_path).convert('RGB')
 
         if self.is_train:
-
             positive_list = self.index[self.index != idx][self.labels[self.index != idx] == anchor_label]
 
             if positive_list.empty:
@@ -57,9 +51,7 @@ class TripletDataset(Dataset):
                 negative_image = self.transform(negative_image)
 
             return anchor_image, positive_image, negative_image, anchor_label
-
         else:
-
             other_list = self.index[self.index != idx]
             other_idx = random.choice(other_list)
             other_image_path = os.path.join(self.image_folder, self.image_names[self.index == other_idx].values[0])
@@ -75,6 +67,7 @@ class TripletDataset(Dataset):
             if self.transform is not None:
                 anchor_image = self.transform(anchor_image)
                 other_image = self.transform(other_image)
+
             return anchor_image, other_image, y
 
 
@@ -123,14 +116,12 @@ class TripletDatasetAll(Dataset):
 
 
 def get_data(params):
-
     # df = pd.read_csv(params['df_path'])
 
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((params['img_size'], params['img_size']))])
 
     # print(df.shape)
-
 
     # train, test = train_test_split(df, test_size=params['test_size'], random_state=params['seed'])
     train = pd.read_csv(params['df_path_train'])

@@ -1,8 +1,9 @@
 import numpy as np
 import os
-
 import random
 import torch
+
+
 def create_folders(params):
     if not os.path.exists(params["SAVE_FOLDER"]):
         os.mkdir(params["SAVE_FOLDER"])
@@ -15,6 +16,7 @@ def create_folders(params):
 
     if not os.path.exists(os.path.join(params["SAVE_FOLDER"], 'results')):
         os.mkdir(os.path.join(params["SAVE_FOLDER"], 'results'))
+
 
 def set_reproducibility(seed):
     np.random.seed(seed)
