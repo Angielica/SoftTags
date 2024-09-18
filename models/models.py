@@ -65,7 +65,8 @@ class SiameseNetwork(nn.Module):
     def __init__(self, embedding_dim=128, n_channels=3, h_size=64, w_size=64, eps=.99):
         super(SiameseNetwork, self).__init__()
         self.eps = eps
-        self.embedder = EmbeddingNet(embedding_dim=embedding_dim, n_channels=n_channels, h_size=h_size, w_size=w_size)
+        self.embedder = EmbeddingNet(embedding_dim=embedding_dim, n_channels=n_channels, h_size=h_size,
+                                     w_size=w_size)
 
         self.fc = nn.Sequential(
             nn.Linear(in_features=2 * embedding_dim, out_features=embedding_dim),

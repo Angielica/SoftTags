@@ -11,7 +11,7 @@ def plot_loss_training(loss_values, path):
     plt.ylabel('Loss')
     plt.legend(loc='upper center')
     plt.savefig(path)
-    plt.show()
+    plt.close()
 
 
 def plot_loss_training_log(loss_values, path):
@@ -25,7 +25,7 @@ def plot_loss_training_log(loss_values, path):
     plt.ylabel('Loss')
     plt.legend(loc='upper center')
     plt.savefig(path)
-    plt.show()
+    plt.close()
 
 
 def plot_roc_curve(fpr, tpr, auc, path):
@@ -36,7 +36,7 @@ def plot_roc_curve(fpr, tpr, auc, path):
     plt.title('Receiver Operating Characteristic (ROC) Curve')
     plt.legend()
     plt.savefig(path)
-    plt.show()
+    plt.close()
 
 
 def plot_pr_curve(precision, recall, path):
@@ -45,7 +45,7 @@ def plot_pr_curve(precision, recall, path):
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.savefig(path)
-    plt.show()
+    plt.close()
 
 
 def plot_loss(loss_values, val_loss_values, path):
@@ -59,7 +59,7 @@ def plot_loss(loss_values, val_loss_values, path):
     plt.ylabel('Loss')
     plt.legend(loc='upper center')
     plt.savefig(path)
-    plt.show()
+    plt.close()
 
 
 def plot_loss_log(loss_values, val_loss_values, path):
@@ -74,4 +74,4 @@ def plot_loss_log(loss_values, val_loss_values, path):
     plt.ylabel('Loss')
     plt.legend(loc='upper center')
     plt.savefig(path)
-    plt.show()
+    plt.close()

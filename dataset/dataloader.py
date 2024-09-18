@@ -157,7 +157,10 @@ def create_triplets(folder, params):
             for pos_elem in os.listdir(folder + '/' + tag_id):
                 positive_list.append(os.path.join(folder, tag_id, pos_elem))
 
-            positive_list = np.random.choice(positive_list, size=params['n_triples'], replace=False)
+            if len(positive_list) < params['n_triplet']:
+                positive_list = list(np.random.choice(positive_list, size=params['n_triplet']))
+            else:
+                positive_list = list(np.random.choice(positive_list, size=params['n_triplet'], replace=False))
 
             tmp = os.listdir(folder)
             tmp.remove(tag_id)
@@ -168,7 +171,7 @@ def create_triplets(folder, params):
                 for neg_elem in os.listdir(folder + '/' + neg_id):
                     negative_list.append(os.path.join(folder, neg_id, neg_elem))
 
-            negative_list = np.random.choice(negative_list, size=params['n_triples'], replace=False)
+            negative_list = list(np.random.choice(negative_list, size=params['n_triplet'], replace=False))
 
             while len(positive_list) != 0 and len(negative_list) != 0:
                 positive_image_path = np.random.choice(positive_list, size=1)[0]
@@ -177,11 +180,11 @@ def create_triplets(folder, params):
                 positive_list.remove(positive_image_path)
                 negative_list.remove(negative_image_path)
 
-                positive_image = positive_image_path.split('/')[8]
-                positive_label = positive_image_path.split('/')[7]
+                positive_image = positive_image_path.split('/')[-1]
+                positive_label = positive_image_path.split('/')[-2]
 
-                negative_image = negative_image_path.split('/')[8]
-                negative_label = negative_image_path.split('/')[7]
+                negative_image = negative_image_path.split('/')[-1]
+                negative_label = negative_image_path.split('/')[-2]
 
                 triplet.append([anchor_image, anchor_label,
                                 positive_image, positive_label,
@@ -198,17 +201,16 @@ def create_triplets(folder, params):
 
 def get_data(params):
     transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Resize((params['img_size'], params['img_size']))])
+                                    transforms.Resize((params['dim1'], params['dim2']))])
 
     train, val, test = create_train_val_test_sets(params)
 
-    train_dataset = TripletDatasetAll(train, params['image_folder'], transform=transform)
+    train_dataset = TripletDatasetAll(train, transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
 
-    val_dataset = TripletDatasetAll(val, params['image_folder'], transform=transform)
+    val_dataset = TripletDatasetAll(val, transform=transform)
     val_loader = DataLoader(val_dataset, batch_size=params['batch_size'], shuffle=True)
 
-    test_dataset = TripletDatasetAll(test, params['image_folder'], is_train=False,
-                                     transform=transform)
+    test_dataset = TripletDatasetAll(test,  is_train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
-    return train_loader, test_loader
+    return train_loader, val_loader, test_loader

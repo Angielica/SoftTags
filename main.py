@@ -66,7 +66,7 @@ def main(fname):
 
         # model = EmbeddingNet(embedding_dim=params['embedding_dim'])
         model = SiameseNetwork(embedding_dim=params['embedding_dim'], n_channels=params['n_channels'],
-                               h_size=params['img_size'], w_size=params['img_size']).to(device)
+                               h_size=params['dim1'], w_size=params['dim2']).to(device)
 
         trainer = Trainer(params, model)
 
