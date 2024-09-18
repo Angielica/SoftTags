@@ -10,6 +10,7 @@ from models.models import SiameseNetwork
 from utils.plotter import plot_loss_training, plot_loss_training_log, plot_loss, plot_loss_log
 from utils.utility import reset_weights, EarlyStopper
 
+
 class Trainer:
     def __init__(self, params, model):
         self.params = params

@@ -7,6 +7,8 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
+import numpy as np
+
 
 class TripletDataset(Dataset):
     def __init__(self, df, image_folder, is_train=True, transform=None):
@@ -72,9 +74,8 @@ class TripletDataset(Dataset):
 
 
 class TripletDatasetAll(Dataset):
-    def __init__(self, df, image_folder, is_train=True, transform=None, thresh=.5):
+    def __init__(self, df, is_train=True, transform=None, thresh=.5):
         self.df = df
-        self.image_folder = image_folder
         self.is_train = is_train
         self.transform = transform
         self.thresh = thresh
@@ -86,13 +87,13 @@ class TripletDatasetAll(Dataset):
         data = self.df.iloc[idx]
 
         anchor_label = data['anchor_label']
-        anchor_image_path = os.path.join(self.image_folder, data['anchor_image'])
+        anchor_image_path = data['anchor_path']
         anchor_image = Image.open(anchor_image_path).convert('RGB')
 
-        positive_image_path = os.path.join(self.image_folder, data['positive_image'])
+        positive_image_path = data['positive_path']
         positive_image = Image.open(positive_image_path).convert('RGB')
 
-        negative_image_path = os.path.join(self.image_folder, data['negative_image'])
+        negative_image_path = data['negative_path']
         negative_image = Image.open(negative_image_path).convert('RGB')
 
         if self.transform is not None:
@@ -115,58 +116,83 @@ class TripletDatasetAll(Dataset):
             return anchor_image, positive_image, torch.ones(1), negative_image, torch.zeros(1)
 
 
-def create_train_test_sets(params):
-    df = pd.read_csv(params['df_path'])
-    labels = list(df.label.unique())
+def create_train_val_test_sets(params):
+    if params['generate_triplets']:
+        train_folder, val_folder, test_folder = params['train_folder'], params['val_folder'], params['test_folder']
+        train_dataset = create_triplets(train_folder, params)
+        train_dataset.to_csv(params['train_path'], index=False)
 
-    train_tags, test_tags = train_test_split(labels, test_size=params['test_size'], random_state=params['seed'])
+        val_dataset = create_triplets(val_folder, params)
+        val_dataset.to_csv(params['val_path'], index=False)
 
-    train = df[df['label'].isin(train_tags)]
-    test = df[df['label'].isin(test_tags)]
+        test_dataset = create_triplets(test_folder, params)
+        test_dataset.to_csv(params['test_path'], index=False)
+    else:
+        train_dataset = pd.read_csv(params['train_path'])
+        val_dataset = pd.read_csv(params['val_path'])
+        test_dataset = pd.read_csv(params['test_path'])
 
-    train.reset_index(inplace=True)
-    test.reset_index(inplace=True)
+    print(f'[Triplet] Train set size: ', len(train_dataset))
+    print(f'[Triplet] Val set size: {len(val_dataset)}')
+    print(f'[Triplet] Test set size: {len(test_dataset)}')
 
-    print(f'Train set size: ', len(train))
-    print(f'Test set size: {len(test)}')
-
-    train = create_triplets(train)
-    test = create_triplets(test)
-
-    print(f'[Triplet] Train set size: ', len(train))
-    print(f'[Triplet] Test set size: {len(test)}')
-
-    return train, test
+    return train_dataset, val_dataset, test_dataset
 
 
-def create_triplets(df):
-    image_names = df['img_name']
-    labels = df['label']
-    index = df.index
+def create_triplets(folder, params):
+    unique_tags_id = os.listdir(folder)
 
     triplet = []
-    for idx, name in enumerate(image_names):
-        anchor_image = name
-        anchor_label = labels[idx]
+    for tag_id in unique_tags_id:
+        for elem in os.listdir(folder + '/' + tag_id):
+            anchor_image_path = os.path.join(folder, tag_id, elem)
+            anchor_image = elem
+            anchor_label = tag_id
 
-        positive_list = index[index == idx][labels[index == idx] == anchor_label]
-        negative_list = index[index != idx][labels[index != idx] != anchor_label]
+            # Create k triplets
+            np.random.seed(params['seed'])
 
-        if len(positive_list) > 0:
-            for idxp in positive_list:
-                positive_image = image_names.iloc[idxp]
-                positive_label = labels.iloc[idxp]
+            positive_list = []
 
-                for idxn in negative_list:
-                    negative_image = image_names.iloc[idxn]
-                    negative_label = labels.iloc[idxn]
+            for pos_elem in os.listdir(folder + '/' + tag_id):
+                positive_list.append(os.path.join(folder, tag_id, pos_elem))
 
-                    triplet.append(
-                        [anchor_image, anchor_label, positive_image, positive_label, negative_image, negative_label])
+            positive_list = np.random.choice(positive_list, size=params['n_triples'], replace=False)
 
-    triplet = pd.DataFrame(triplet, columns=['anchor_image', 'anchor_label', 'positive_image', 'positive_label',
-                                             'negative_image', 'negative_label'])
+            tmp = os.listdir(folder)
+            tmp.remove(tag_id)
 
+            negative_list = []
+
+            for neg_id in tmp:
+                for neg_elem in os.listdir(folder + '/' + neg_id):
+                    negative_list.append(os.path.join(folder, neg_id, neg_elem))
+
+            negative_list = np.random.choice(negative_list, size=params['n_triples'], replace=False)
+
+            while len(positive_list) != 0 and len(negative_list) != 0:
+                positive_image_path = np.random.choice(positive_list, size=1)[0]
+                negative_image_path = np.random.choice(negative_list, size=1)[0]
+
+                positive_list.remove(positive_image_path)
+                negative_list.remove(negative_image_path)
+
+                positive_image = positive_image_path.split('/')[8]
+                positive_label = positive_image_path.split('/')[7]
+
+                negative_image = negative_image_path.split('/')[8]
+                negative_label = negative_image_path.split('/')[7]
+
+                triplet.append([anchor_image, anchor_label,
+                                positive_image, positive_label,
+                                negative_image, negative_label,
+                                anchor_image_path, positive_image_path, negative_image_path])
+
+    triplet = pd.DataFrame(triplet, columns=['anchor_image', 'anchor_label',
+                                             'positive_image', 'positive_label',
+                                             'negative_image', 'negative_label',
+                                             'anchor_path', 'positive_path',
+                                             'negative_path'])
     return triplet
 
 
@@ -174,15 +200,13 @@ def get_data(params):
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((params['img_size'], params['img_size']))])
 
-    train, test = create_train_test_sets(params)
-    # train = pd.read_csv(params['df_path_train'])
-    # test = pd.read_csv(params['df_path_test'])
-
-    print(train.shape)
-    print(test.shape)
+    train, val, test = create_train_val_test_sets(params)
 
     train_dataset = TripletDatasetAll(train, params['image_folder'], transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
+
+    val_dataset = TripletDatasetAll(val, params['image_folder'], transform=transform)
+    val_loader = DataLoader(val_dataset, batch_size=params['batch_size'], shuffle=True)
 
     test_dataset = TripletDatasetAll(test, params['image_folder'], is_train=False,
                                      transform=transform)

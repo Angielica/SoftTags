@@ -37,10 +37,10 @@ def main(fname):
         dataset_name = params['dataset_name']
         params['seed'] = seed
 
-        # angle = params['angle']
+        angle = params['angle']
         set_reproducibility(seed)
 
-        exp = f'RUN_{i}_SEED_{seed}_DATASET_{dataset_name}'
+        exp = f'RUN_{i}_SEED_{seed}_DATASET_{dataset_name}_angle_{angle}'
 
         log_path = os.path.join(params['SAVE_FOLDER'], 'results', f'log_{exp}.txt')
         open(log_path, 'w').close()
@@ -59,7 +59,10 @@ def main(fname):
         params['path_pr_curve'] = os.path.join(params["SAVE_FOLDER"], 'plots', path_pr_curve)
 
         # Create data
-        train_loader, test_loader = get_data(params)
+        params['train_path'] = f'./data/train_run_{i}_seed_{seed}.csv'
+        params['val_path'] = f'./data/val_run_{i}_seed_{seed}.csv'
+        params['test_path'] = f'./data/test_run_{i}_seed_{seed}.csv'
+        train_loader, val_loader, test_loader = get_data(params)
 
         # model = EmbeddingNet(embedding_dim=params['embedding_dim'])
         model = SiameseNetwork(embedding_dim=params['embedding_dim'], n_channels=params['n_channels'],
@@ -68,7 +71,7 @@ def main(fname):
         trainer = Trainer(params, model)
 
         if params['train']:
-            trainer.train(train_loader)
+            trainer.train(train_loader, val_loader)
 
         if params['test']:
             if params['load_best_model']:
