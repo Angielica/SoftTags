@@ -6,7 +6,7 @@ import os
 import torch
 
 from models.models import SiameseNetwork
-from models.trainer import Trainer
+from models.trainer import Trainer, TrainerCrossValidation
 from utils.utility import create_folders, set_reproducibility
 from utils.plotter import plot_roc_curve, plot_pr_curve
 from dataset.dataloader import get_data
@@ -27,7 +27,9 @@ def main(fname):
     # if "CUDA_VISIBLE_DEVICES" not in os.environ:
         # os.environ["CUDA_VISIBLE_DEVICES"] = params["n_gpu"]
 
-    device = torch.device(f"cuda:1" if torch.cuda.is_available() else "cpu")
+    n_gpu = params["n_gpu"]
+
+    device = torch.device(f"cuda:{n_gpu}" if torch.cuda.is_available() else "cpu")
     params["device"] = device
 
     print(torch.cuda.device_count())
@@ -35,11 +37,13 @@ def main(fname):
 
     create_folders(params)
 
-    for i in range(params['n_runs']):
-        dataset_name = params['dataset_name']
-        params['seed'] = init_seed + i
+    np.random.seed(params["seed"])
+    seeds = np.random.randint(17, 37179, size=50)[params['init_runs']:params['n_runs']]
 
-        seed = params['seed']
+    for i, seed in zip(range(params['init_runs'], params['n_runs']), seeds):
+        dataset_name = params['dataset_name']
+        params['seed'] = seed
+
         angle = params['angle']
         set_reproducibility(seed)
 
@@ -53,7 +57,7 @@ def main(fname):
         params['best_path_model'] = os.path.join(params["SAVE_FOLDER"], 'models', best_path_model)
         params['last_path_model'] = os.path.join(params["SAVE_FOLDER"], 'models', last_path_model)
 
-        path_training_loss, path_training_loss_log = f'training_loss_{exp}.pdf', f'training_log_loss_{exp}.pdf'
+        path_training_loss, path_training_loss_log = f'training_loss_{exp}', f'training_log_loss_{exp}'
         params['path_training_loss'] = os.path.join(params["SAVE_FOLDER"], 'plots', path_training_loss)
         params['path_training_loss_log'] = os.path.join(params["SAVE_FOLDER"], 'plots', path_training_loss_log)
 
@@ -85,9 +89,13 @@ def main(fname):
             confusion_matrix(y_true, preds)
 
             print(classification_report(y_true, preds))
+            with open(params['log_path'], 'a') as f:
+                f.write(f'Classification report: {classification_report(y_true, preds)} \n')
 
             aucroc = roc_auc_score(y_true, y_pred)
             print('AUC: %.2f' % aucroc)
+            with open(params['log_path'], 'a') as f:
+                f.write(f'AUC: {aucroc:.2f} \n')
 
             fpr, tpr, thresholds = roc_curve(y_true, y_pred)
             plot_roc_curve(fpr, tpr, aucroc, params['path_roc'])
@@ -95,6 +103,8 @@ def main(fname):
             precision, recall, _ = precision_recall_curve(y_true, y_pred)
             auprc = auc(recall, precision)
             print(f'PR AUC: {auprc:.2f}')
+            with open(params['log_path'], 'a') as f:
+                f.write(f'PR AUC: {auprc:.2f} \n')
             plot_pr_curve(precision, recall, params['path_pr_curve'])
 
 

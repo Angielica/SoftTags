@@ -4,6 +4,7 @@
   "image_folder": "./data/tags",
   "n_gpu": "1",
   "init_seed": 42,
+  "init_runs": 0,
   "n_runs": 1,
   "embedding_dim":128,
   "lr": 1e-4,

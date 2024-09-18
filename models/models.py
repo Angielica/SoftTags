@@ -35,9 +35,8 @@ class EmbeddingNet(nn.Module):
         self.size2 = out.shape[3]
 
         self.fc = nn.Sequential(
-            nn.Linear(self.last_dim * self.size1 * self.size2, 512),
-            nn.LeakyReLU(),
-            nn.Linear(512, self.embedding_dim)
+            nn.Linear(self.last_dim * self.size1 * self.size2, self.embedding_dim),
+            nn.LeakyReLU()
         )
 
         self.init_weights()
