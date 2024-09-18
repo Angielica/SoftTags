@@ -122,71 +122,26 @@ class TripletDatasetAll(Dataset):
             return anchor_image, positive_image, torch.ones(1), negative_image, torch.zeros(1)
 
 
-def create_train_test_sets(params):
-    df = pd.read_csv(params['df_path'])
-    labels = list(df.label.unique())
-
-    train_tags, test_tags = train_test_split(labels, test_size=params['test_size'], random_state=params['seed'])
-
-    train = df[df['label'].isin(train_tags)]
-    test = df[df['label'].isin(test_tags)]
-
-    train.reset_index(inplace=True)
-    test.reset_index(inplace=True)
-
-    print(f'Train set size: ', len(train))
-    print(f'Test set size: {len(test)}')
-
-    train = create_triplets(train)
-    test = create_triplets(test)
-
-    print(f'[Triplet] Train set size: ', len(train))
-    print(f'[Triplet] Test set size: {len(test)}')
-
-    return train, test
-
-
-def create_triplets(df):
-    image_names = df['img_name']
-    labels = df['label']
-    index = df.index
-
-    triplet = []
-    for idx, name in enumerate(image_names):
-        anchor_image = name
-        anchor_label = labels[idx]
-
-        positive_list = index[index == idx][labels[index == idx] == anchor_label]
-        negative_list = index[index != idx][labels[index != idx] != anchor_label]
-
-        if len(positive_list) > 0:
-            for idxp in positive_list:
-                positive_image = image_names.iloc[idxp]
-                positive_label = labels.iloc[idxp]
-
-                for idxn in negative_list:
-                    negative_image = image_names.iloc[idxn]
-                    negative_label = labels.iloc[idxn]
-
-                    triplet.append(
-                        [anchor_image, anchor_label, positive_image, positive_label, negative_image, negative_label])
-
-    triplet = pd.DataFrame(triplet, columns=['anchor_image', 'anchor_label', 'positive_image', 'positive_label',
-                                             'negative_image', 'negative_label'])
-
-    return triplet
-
-
 def get_data(params):
+
+    # df = pd.read_csv(params['df_path'])
+
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((params['img_size'], params['img_size']))])
 
-    train, test = create_train_test_sets(params)
+    # print(df.shape)
+
+
+    # train, test = train_test_split(df, test_size=params['test_size'], random_state=params['seed'])
+    train = pd.read_csv(params['df_path_train'])
+    test = pd.read_csv(params['df_path_test'])
+
+    print(train.shape)
+    print(test.shape)
 
     train_dataset = TripletDatasetAll(train, params['image_folder'], transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
 
-    test_dataset = TripletDatasetAll(test, params['image_folder'], is_train=False,
-                                     transform=transform)
+    test_dataset = TripletDatasetAll(test, params['image_folder'], is_train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
     return train_loader, test_loader

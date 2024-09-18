@@ -1,21 +1,17 @@
 import json
-import sys
-
+import numpy as np
 import os
-
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import roc_curve, precision_recall_curve, auc
+from sklearn.metrics import roc_auc_score
+import sys
 import torch
 
+from dataset.dataloader import get_data
 from models.models import SiameseNetwork
 from models.trainer import Trainer, TrainerCrossValidation
 from utils.utility import create_folders, set_reproducibility
 from utils.plotter import plot_roc_curve, plot_pr_curve
-from dataset.dataloader import get_data
-
-from sklearn.metrics import confusion_matrix, classification_report
-import numpy as np
-
-from sklearn.metrics import roc_curve, precision_recall_curve, auc
-from sklearn.metrics import roc_auc_score
 
 
 def main(fname):
@@ -25,7 +21,7 @@ def main(fname):
     init_seed = params['init_seed']
 
     # if "CUDA_VISIBLE_DEVICES" not in os.environ:
-        # os.environ["CUDA_VISIBLE_DEVICES"] = params["n_gpu"]
+    #     os.environ["CUDA_VISIBLE_DEVICES"] = params["n_gpu"]
 
     n_gpu = params["n_gpu"]
 
@@ -72,6 +68,7 @@ def main(fname):
         model = SiameseNetwork(embedding_dim=params['embedding_dim'],
                                n_channels=params['n_channels'], h_size=params['img_size'],
                                w_size=params['img_size']).to(device)
+
         trainer = Trainer(params, model)
 
         if params['train']:

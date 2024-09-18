@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class TripletLoss(nn.Module):
     def __init__(self, margin=1., p=2, eps=1e-6, reduction='mean'):
         super(TripletLoss, self).__init__()

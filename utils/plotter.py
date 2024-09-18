@@ -27,6 +27,7 @@ def plot_loss_training_log(loss_values, path):
     plt.savefig(path)
     plt.show()
 
+
 def plot_roc_curve(fpr, tpr, auc, path):
     plt.plot(fpr, tpr, color='orange', label=f'AUROC: {auc:.4f}')
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
