@@ -9,7 +9,7 @@ import torch
 
 from dataset.dataloader import get_data
 from models.models import SiameseNetwork
-from models.trainer import Trainer, TrainerCrossValidation
+from models.trainer import Trainer
 from utils.utility import create_folders, set_reproducibility
 from utils.plotter import plot_roc_curve, plot_pr_curve
 
@@ -28,22 +28,19 @@ def main(fname):
     device = torch.device(f"cuda:{n_gpu}" if torch.cuda.is_available() else "cpu")
     params["device"] = device
 
-    print(torch.cuda.device_count())
-    print(os.curdir)
-
     create_folders(params)
 
-    np.random.seed(params["seed"])
+    np.random.seed(init_seed)
     seeds = np.random.randint(17, 37179, size=50)[params['init_runs']:params['n_runs']]
 
     for i, seed in zip(range(params['init_runs'], params['n_runs']), seeds):
         dataset_name = params['dataset_name']
         params['seed'] = seed
 
-        angle = params['angle']
+        # angle = params['angle']
         set_reproducibility(seed)
 
-        exp = f'RUN_{i}_SEED_{seed}_DATASET_{dataset_name}_angle_{angle}'
+        exp = f'RUN_{i}_SEED_{seed}_DATASET_{dataset_name}'
 
         log_path = os.path.join(params['SAVE_FOLDER'], 'results', f'log_{exp}.txt')
         open(log_path, 'w').close()
@@ -65,9 +62,8 @@ def main(fname):
         train_loader, test_loader = get_data(params)
 
         # model = EmbeddingNet(embedding_dim=params['embedding_dim'])
-        model = SiameseNetwork(embedding_dim=params['embedding_dim'],
-                               n_channels=params['n_channels'], h_size=params['img_size'],
-                               w_size=params['img_size']).to(device)
+        model = SiameseNetwork(embedding_dim=params['embedding_dim'], n_channels=params['n_channels'],
+                               h_size=params['img_size'], w_size=params['img_size']).to(device)
 
         trainer = Trainer(params, model)
 

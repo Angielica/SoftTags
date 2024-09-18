@@ -40,7 +40,7 @@ class EmbeddingNet(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        for m in self.modules():  # FIXME not sure layers are registered as modules
+        for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                 nn.init.kaiming_normal_(
                     m.weight, mode='fan_out', nonlinearity='relu')
