@@ -3,6 +3,8 @@ from sklearn.model_selection import KFold
 
 from time import time
 import torch
+from torch.utils.tensorboard import SummaryWriter
+
 from tqdm import tqdm
 
 from models.losses import TripletLoss, TripletClassifierLoss
@@ -23,6 +25,9 @@ class Trainer:
 
         self.criterion = TripletClassifierLoss()
 
+        self.tensorboard_path = self.params['tensorboard_path']
+        self.writer = SummaryWriter(self.tensorboard_path)
+
     def train_step(self, a, p, n):
         self.optimizer.zero_grad()
 
@@ -40,7 +45,7 @@ class Trainer:
         val_losses = []
 
         with torch.no_grad():
-            for a, p, n, _ in val_loader:
+            for a, p, n, _ in tqdm(val_loader, total=len(val_loader)):
                 a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
                 d_ap, d_an = self.model(a, p, n)
@@ -56,7 +61,7 @@ class Trainer:
         with torch.no_grad():
             count = 0
             # for x1, x2, y in tqdm(test_loader):
-            for a, p, yap, n, yan in tqdm(test_loader):
+            for a, p, yap, n, yan in tqdm(test_loader, total=len(test_loader)):
                 # x1, x2 = x1.to(self.device), x2.to(self.device)
                 a, p, n = a.to(self.device), p.to(self.device), n.to(self.device)
 
@@ -114,6 +119,8 @@ class Trainer:
                 with open(self.params['log_path'], 'a') as f:
                     f.write(f'Epoch: {epoch} / {n_epochs}, Train loss: {epoch_loss} \n')
 
+                self.writer.add_scalar('train_loss', epoch_loss, epoch)
+
                 if val_loader is not None:
                     val_loss = self.evaluate(val_loader)
                     val_losses.append(val_loss)
@@ -126,6 +133,7 @@ class Trainer:
                     print(f'Epoch: {epoch} / {n_epochs}, Val loss: {val_loss}')
                     with open(self.params['log_path'], 'a') as f:
                         f.write(f'Epoch: {epoch} / {n_epochs}, Val loss: {val_loss} \n')
+                    self.writer.add_scalar('val_loss', val_loss, epoch)
 
                 else:
                     current_loss = epoch_loss

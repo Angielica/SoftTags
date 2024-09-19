@@ -1,6 +1,8 @@
 import json
 import numpy as np
 import os
+
+import pandas as pd
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.metrics import roc_curve, precision_recall_curve, auc
 from sklearn.metrics import roc_auc_score
@@ -33,18 +35,22 @@ def main(fname):
     np.random.seed(init_seed)
     seeds = np.random.randint(17, 37179, size=50)[params['init_runs']:params['n_runs']]
 
-    for i, seed in zip(range(params['init_runs'], params['n_runs']), seeds):
-        dataset_name = params['dataset_name']
-        params['seed'] = seed
+    dataset_name = params['dataset_name']
+    angle = params['angle']
 
-        angle = params['angle']
+    performances = []
+
+    for i, seed in zip(range(params['init_runs'], params['n_runs']), seeds):
+        params['seed'] = seed
         set_reproducibility(seed)
 
         exp = f'RUN_{i}_SEED_{seed}_DATASET_{dataset_name}_angle_{angle}'
 
         log_path = os.path.join(params['SAVE_FOLDER'], 'results', f'log_{exp}.txt')
-        open(log_path, 'w').close()
         params['log_path'] = log_path
+
+        tensorboard_path = f'{params["SAVE_FOLDER"]}/logs/tb_{exp}'
+        params['tensorboard_path'] = tensorboard_path
 
         best_path_model, last_path_model = f'best_model_{exp}.pt', f'last_model_{exp}.pt'
         params['best_path_model'] = os.path.join(params["SAVE_FOLDER"], 'models', best_path_model)
@@ -71,6 +77,7 @@ def main(fname):
         trainer = Trainer(params, model)
 
         if params['train']:
+            open(log_path, 'w').close()
             trainer.train(train_loader, val_loader)
 
         if params['test']:
@@ -102,6 +109,12 @@ def main(fname):
             with open(params['log_path'], 'a') as f:
                 f.write(f'PR AUC: {auprc:.2f} \n')
             plot_pr_curve(precision, recall, params['path_pr_curve'])
+
+            performances.append([i, aucroc, auprc])
+
+    performances = pd.DataFrame(performances, columns=['Run', 'AUCROC', 'AUPRC'])
+    performances.to_csv(os.path.join(params["SAVE_FOLDER"], f'performances_DATASET_{dataset_name}_angle_{angle}.csv'),
+                        index=False)
 
 
 if __name__ == "__main__":

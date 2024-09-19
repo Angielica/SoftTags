@@ -8,7 +8,7 @@
   "n_gpu": "0",
   "init_seed": 42,
   "init_runs": 0,
-  "n_runs": 10,
+  "n_runs": 20,
   "embedding_dim":128,
   "lr": 1e-4,
   "batch_size": 256,
