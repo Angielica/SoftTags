@@ -37,6 +37,7 @@ def main(fname):
 
     dataset_name = params['dataset_name']
     angle = params['angle']
+    data_folder = params['data_folder']
 
     performances = []
 
@@ -65,9 +66,10 @@ def main(fname):
         params['path_pr_curve'] = os.path.join(params["SAVE_FOLDER"], 'plots', path_pr_curve)
 
         # Create data
-        params['train_path'] = f'./data/train_run_{i}_seed_{seed}.csv'
-        params['val_path'] = f'./data/val_run_{i}_seed_{seed}.csv'
-        params['test_path'] = f'./data/test_run_{i}_seed_{seed}.csv'
+        params['train_path'] = f'{data_folder}/train_run_{i}_seed_{seed}.csv'
+        params['val_path'] = f'{data_folder}/val_run_{i}_seed_{seed}.csv'
+        # params['test_path'] = f'{data_folder}/test_run_{i}_seed_{seed}.csv'
+        params['test_path'] = f'{data_folder}/test_run_0_seed_15812.csv'
         train_loader, val_loader, test_loader = get_data(params)
 
         # model = EmbeddingNet(embedding_dim=params['embedding_dim'])

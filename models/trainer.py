@@ -96,7 +96,7 @@ class Trainer:
         print(f"Number of steps: {len(train_loader)}")
 
         early_stopped = False
-        early_stopper = EarlyStopper(patience=10, min_delta=0.001)
+        early_stopper = EarlyStopper(patience=20, min_delta=0.0001)
 
         with open(self.params['log_path'], 'a') as f:
             f.write(f'Starting training phase. Starting time: {time_start} \n')

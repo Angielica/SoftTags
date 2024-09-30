@@ -19,12 +19,21 @@ class EmbeddingNet(nn.Module):
             nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
+            nn.Dropout2d(0.2),
             nn.MaxPool2d(2, 2),
 
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
+            nn.Dropout2d(0.2),
+            nn.MaxPool2d(2, 2),
+
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Dropout2d(0.2),
             nn.MaxPool2d(2, 2),
         )
 

@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Remote Python 3.10.12 (sftp://liguori@dgx.icar.cnr.it:22/mnt/nas/liguori/menv/bin/python) (2)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (SoftTags)" project-jdk-type="Python SDK" />
 </project>

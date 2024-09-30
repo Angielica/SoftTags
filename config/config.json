@@ -1,10 +1,10 @@
 {
   "dataset_name": "SoftTags",
-  "train_folder": "./data/train",
-  "test_folder": "./data/test",
-  "val_folder": "./data/val",
+  "train_folder": "./data/Softags-All/train",
+  "test_folder": "./data/Softags-All/test",
+  "val_folder": "./data/Softags-All/val",
   "n_triplet": 10,
-  "generate_triplets": 1,
+  "generate_triplets": 0,
   "n_gpu": "0",
   "init_seed": 42,
   "init_runs": 0,
@@ -22,7 +22,7 @@
   "reduction": "mean",
   "SAVE_FOLDER": "./saved",
   "load_best_model": 1,
-  "train": 1,
+  "train": 0,
   "test": 1,
   "angle": "all"
 
