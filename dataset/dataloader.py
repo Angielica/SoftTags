@@ -136,6 +136,9 @@ def create_train_val_test_sets(params):
     print(f'[Triplet] Val set size: {len(val_dataset)}')
     print(f'[Triplet] Test set size: {len(test_dataset)}')
 
+    with open(params['log_path'], 'a') as f:
+        f.write(f'[Triplet] Train set size: {len(train_dataset)}; \n [Triplet] Val set size: {len(val_dataset)}; \n [Triplet] Test set size: {len(test_dataset)} \n')
+
     return train_dataset, val_dataset, test_dataset
 
 
