@@ -42,6 +42,7 @@ def main(fname):
     performances = []
 
     for i, seed in zip(range(params['init_runs'], params['n_runs']), seeds):
+        print(f"Run: {i}")
         params['seed'] = seed
         set_reproducibility(seed)
 
@@ -66,10 +67,16 @@ def main(fname):
         params['path_pr_curve'] = os.path.join(params["SAVE_FOLDER"], 'plots', path_pr_curve)
 
         # Create data
-        params['train_path'] = f'{data_folder}/train_run_{i}_seed_{seed}.csv'
-        params['val_path'] = f'{data_folder}/val_run_{i}_seed_{seed}.csv'
-        # params['test_path'] = f'{data_folder}/test_run_{i}_seed_{seed}.csv'
-        params['test_path'] = f'{data_folder}/test_run_0_seed_15812.csv'
+        if 'df_path' not in params:
+            params['train_path'] = f'{data_folder}/train_run_{i}_seed_{seed}.csv'
+            params['val_path'] = f'{data_folder}/val_run_{i}_seed_{seed}.csv'
+            params['test_path'] = f'{data_folder}/test_run_{i}_seed_{seed}.csv'
+            # params['test_path'] = f'{data_folder}/test_run_0_seed_15812.csv'
+        else:
+            data_folder_old = params['data_folder_old']
+            params['train_path'] = f'{data_folder_old}/train_run_{i}_seed_{seed}.csv'
+            params['test_path'] = f'{data_folder_old}/test_run_{i}_seed_{seed}.csv'
+
         train_loader, val_loader, test_loader = get_data(params)
 
         # model = EmbeddingNet(embedding_dim=params['embedding_dim'])

@@ -116,16 +116,89 @@ class TripletDatasetAll(Dataset):
             return anchor_image, positive_image, torch.ones(1), negative_image, torch.zeros(1)
 
 
+def create_train_test_sets(params):
+    df = pd.read_csv(params['df_path'])
+    labels = list(df.label.unique())
+
+    train_tags, test_tags = train_test_split(labels, test_size=params['test_size'], random_state=params['seed'])
+
+    train = df[df['label'].isin(train_tags)]
+    test = df[df['label'].isin(test_tags)]
+
+    train.reset_index(inplace=True)
+    test.reset_index(inplace=True)
+
+    print(f'Train set size: ', len(train))
+    print(f'Test set size: {len(test)}')
+
+    train = create_triplets_with_all_combinations(train, params)
+    test = create_triplets_with_all_combinations(test, params)
+
+    print(f'[Triplet] Train set size: ', len(train))
+    print(f'[Triplet] Test set size: {len(test)}')
+
+    with open(params['log_path'], 'a') as f:
+        f.write(
+            f'[Triplet] Train set size: {len(train)}; \n [Triplet] Test set size: {len(test)} \n')
+
+    train.to_csv(params['train_path'], index=False)
+    test.to_csv(params['test_path'], index=False)
+
+    return train, test
+
+
+def create_triplets_with_all_combinations(df, params):
+    image_names = df['img_name']
+    labels = df['label']
+    index = df.index
+
+    triplet = []
+    for idx, name in enumerate(image_names):
+        anchor_image = name
+        anchor_label = labels[idx]
+
+        positive_list = index[index == idx][labels[index == idx] == anchor_label]
+        negative_list = index[index != idx][labels[index != idx] != anchor_label]
+
+        if len(positive_list) > 0:
+            for idxp in positive_list:
+                positive_image = image_names.iloc[idxp]
+                positive_label = labels.iloc[idxp]
+
+                for idxn in negative_list:
+                    negative_image = image_names.iloc[idxn]
+                    negative_label = labels.iloc[idxn]
+
+                    anchor_path = os.path.join(params['data_folder'], anchor_image)
+                    positive_path = os.path.join(params['data_folder'], positive_image)
+                    negative_path = os.path.join(params['data_folder'], negative_image)
+
+                    triplet.append(
+                        [anchor_image, anchor_label, positive_image, positive_label, negative_image, negative_label,
+                         anchor_path, positive_path, negative_path])
+
+    triplet = pd.DataFrame(triplet, columns=['anchor_image', 'anchor_label', 'positive_image', 'positive_label',
+                                             'negative_image', 'negative_label', 'anchor_path', 'positive_path',
+                                                             'negative_path'])
+
+    return triplet
+
+
 def create_train_val_test_sets(params):
     if params['generate_triplets']:
         train_folder, val_folder, test_folder = params['train_folder'], params['val_folder'], params['test_folder']
         train_dataset = create_triplets(train_folder, params)
         train_dataset.to_csv(params['train_path'], index=False)
 
-        val_dataset = create_triplets(val_folder, params)
-        val_dataset.to_csv(params['val_path'], index=False)
+        if params['angle_only_in_test']:
+            val_dataset = create_triplets_test_and_val(val_folder, params)
+            test_dataset = create_triplets_test_and_val(test_folder, params)
 
-        test_dataset = create_triplets(test_folder, params)
+        else:
+            val_dataset = create_triplets(val_folder, params)
+            test_dataset = create_triplets(test_folder, params)
+
+        val_dataset.to_csv(params['val_path'], index=False)
         test_dataset.to_csv(params['test_path'], index=False)
     else:
         train_dataset = pd.read_csv(params['train_path'])
@@ -137,7 +210,8 @@ def create_train_val_test_sets(params):
     print(f'[Triplet] Test set size: {len(test_dataset)}')
 
     with open(params['log_path'], 'a') as f:
-        f.write(f'[Triplet] Train set size: {len(train_dataset)}; \n [Triplet] Val set size: {len(val_dataset)}; \n [Triplet] Test set size: {len(test_dataset)} \n')
+        f.write(
+            f'[Triplet] Train set size: {len(train_dataset)}; \n [Triplet] Val set size: {len(val_dataset)}; \n [Triplet] Test set size: {len(test_dataset)} \n')
 
     return train_dataset, val_dataset, test_dataset
 
@@ -202,18 +276,83 @@ def create_triplets(folder, params):
     return triplet
 
 
+def create_triplets_test_and_val(folder, params):
+    unique_tags_id = os.listdir(folder)
+
+    triplet = []
+    for tag_id in unique_tags_id:
+        elems = os.listdir(folder + '/' + tag_id)
+
+        for elem in elems:
+            if '0' in elem:
+                anchor_image_path = os.path.join(folder, tag_id, elem)
+                anchor_image = elem
+                anchor_label = tag_id
+
+                positive_list = [pos_elem for pos_elem in elems if '15' in pos_elem]
+
+                for pos in positive_list:
+                    positive_image_path = os.path.join(folder, tag_id, pos)
+                    positive_image = pos
+                    positive_label = tag_id
+
+                    tmp = os.listdir(folder)
+                    tmp.remove(tag_id)
+                    tmp.remove('.DS_Store')
+
+                    negative_list = []
+
+                    for neg_id in tmp:
+                        for neg_elem in os.listdir(folder + '/' + neg_id):
+                            if '15' in neg_elem:
+                                negative_list.append(os.path.join(folder, neg_id, neg_elem))
+
+                    if len(negative_list) < params['n_triplet']:
+                        negative_list = list(np.random.choice(negative_list, size=len(negative_list), replace=False))
+                    else:
+                        negative_list = list(np.random.choice(negative_list, size=params['n_triplet'], replace=False))
+
+                    while len(negative_list) != 0:
+                        negative_image_path = np.random.choice(negative_list, size=1)[0]
+
+                        negative_list.remove(negative_image_path)
+
+                        negative_image = negative_image_path.split('/')[8]
+                        negative_label = negative_image_path.split('/')[7]
+
+                        triplet.append([anchor_image, anchor_label,
+                                        positive_image, positive_label,
+                                        negative_image, negative_label,
+                                        anchor_image_path, positive_image_path, negative_image_path])
+
+    triplet = pd.DataFrame(triplet, columns=['anchor_image', 'anchor_label',
+                                             'positive_image', 'positive_label',
+                                             'negative_image', 'negative_label',
+                                             'anchor_path', 'positive_path',
+                                             'negative_path'])
+    return triplet
+
+
 def get_data(params):
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((params['dim1'], params['dim2']))])
 
-    train, val, test = create_train_val_test_sets(params)
+    if 'df_path' in params:
+        train, test = create_train_test_sets(params)
+        train_dataset = TripletDatasetAll(train, transform=transform)
+        train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
+        test_dataset = TripletDatasetAll(test, is_train=False, transform=transform)
+        test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
 
-    train_dataset = TripletDatasetAll(train, transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
+        return train_loader, None, test_loader
 
-    val_dataset = TripletDatasetAll(val, transform=transform)
-    val_loader = DataLoader(val_dataset, batch_size=params['batch_size'], shuffle=True)
+    else:
+        train, val, test = create_train_val_test_sets(params)
 
-    test_dataset = TripletDatasetAll(test,  is_train=False, transform=transform)
-    test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
-    return train_loader, val_loader, test_loader
+        train_dataset = TripletDatasetAll(train, transform=transform)
+        train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
+        val_dataset = TripletDatasetAll(val, transform=transform)
+        val_loader = DataLoader(val_dataset, batch_size=params['batch_size'], shuffle=True)
+        test_dataset = TripletDatasetAll(test, is_train=False, transform=transform)
+        test_loader = DataLoader(test_dataset, batch_size=params['batch_size'])
+        return train_loader, val_loader, test_loader

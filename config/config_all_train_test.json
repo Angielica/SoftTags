@@ -1,12 +1,13 @@
 {
   "dataset_name": "SoftTags",
-  "df_path_train": "./data/train_triplet_all.csv",
-  "df_path_test": "./data/test_triplet_all.csv",
-  "image_folder": "./data/tags",
-  "n_gpu": "1",
+  "train_path": "./data/old/train_triplet_all.csv",
+  "test_path": "./data/old/test_triplet_all.csv",
+  "data_folder": "./data/old/tags",
+  "n_gpu": "0",
   "init_seed": 42,
+  "generate_triplets": 0,
   "init_runs": 0,
-  "n_runs": 1,
+  "n_runs": 10,
   "embedding_dim":128,
   "lr": 1e-4,
   "batch_size": 16,
@@ -22,7 +23,6 @@
   "test_size": 0.2,
   "train": 1,
   "test": 1,
-  "angle": "all_train_test",
-  "cross_validation": 0
+  "angle": "all_train_test"
 
 }

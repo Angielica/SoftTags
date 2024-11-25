@@ -4,7 +4,7 @@
   "test_folder": "./data/softags_45_90/test",
   "val_folder": "./data/softags_45_90/val",
   "data_folder": "./data/softags_45_90",
-  "n_triplet": 60,
+  "n_triplet": 100,
   "generate_triplets": 1,
   "n_gpu": "2",
   "init_seed": 42,
